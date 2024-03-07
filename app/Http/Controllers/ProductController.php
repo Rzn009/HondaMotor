@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
@@ -18,7 +19,7 @@ class ProductController extends Controller
         $title = 'product';
         $product = Product::latest()->paginate(2);
 
-        return view('product.index', compact('title','product'));
+        return view('product.index', compact('title', 'product'));
     }
 
     /**
@@ -30,7 +31,7 @@ class ProductController extends Controller
     {
         $title = 'create';
         $product = Product::latest()->paginate(5);
-        return view('product.create', compact('title','product'));
+        return view('product.create', compact('title', 'product'));
     }
 
     /**
@@ -83,7 +84,9 @@ class ProductController extends Controller
      */
     public function edit($id)
     {
-        //
+        $title = 'edit';
+        $product = Product::find($id);
+        return view('product.edit', compact('title', 'product'));
     }
 
     /**
@@ -95,7 +98,56 @@ class ProductController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        $this->validate($request, [
+            'name' => 'required',
+            'image' => 'required|image|mimes:png,jpg,jpeg,gif|max:5120',
+            'warna' => 'required',
+            'price' => 'required',
+        ]);
+
+
+        // get data by id
+        $product = Product::find($id);
+        // ubah kondisi
+        if (
+            $request->hasFile('image') == ''
+        ) {
+            $image = $request->file('image'); // Retrieve the new image file
+            $imageName = $image->hashName();
+            // Store the new image and delete the old one
+            $image->storeAs('public/product', $image);
+            Storage::delete('public/product/' . $product->image);
+            $product->update([
+                'name' => $request->name,
+                'warna' => $request->warna,
+                'image' => $image->hashName(),
+                'price' => $request->price
+            ]);
+
+            return redirect()->route('product.index');
+        } else {
+            // jika gambar nya pengen di update
+            //hapus img lama
+            $image = $request->file('image');
+
+            $image->storeAs('public/product', $image->hashName());
+
+            Storage::disk('local')->delete('public/product/' . basename($product->image));
+
+
+            // upload img baru
+
+
+            //upload data 
+            $product->update([
+                'name' => $request->name,
+                'warna' => $request->warna,
+                'image' => $image->hashName(),
+                'price' => $request->price
+            ]);
+
+            return redirect()->route('product.index');
+        }
     }
 
     /**
@@ -106,6 +158,11 @@ class ProductController extends Controller
      */
     public function destroy($id)
     {
-        //
+        $product = Product::find($id);
+        Storage::disk('local')->delete('public/category' . basename($product->image));
+        $product->delete();
+
+
+        return redirect()->route('product.index')->with('Nice', 'Data berhasil di delete');
     }
 }

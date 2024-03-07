@@ -38,8 +38,14 @@
                                 <td>{{ $row->price }}</td>
                                 <td>
                                     <button class="btn btn-info"><i class="bi bi-eye"></i></button>
-                                    <button class="btn btn-warning"><i class="bi bi-pencil"></i></button>
-                                    <button class="btn btn-danger"><i class="bi bi-trash"></i></button>
+                                    <a href="{{ route('product.edit', $row->id) }}" class="btn btn-warning"><i
+                                            class="bi bi-pencil"></i></a>
+                                    <form action="{{ route('product.destroy', $row->id) }}" method="POST">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-danger"><i
+                                                class="bi bi-trash-fill"></i></button>
+                                    </form>
                                 </td>
                             @empty
                                 <p>masih kosong</p>
